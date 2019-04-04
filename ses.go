@@ -50,7 +50,7 @@ func (ss *SES) Send(e Email) error {
 		Destination: &ses.Destination{
 			CcAddresses: []*string{},
 			ToAddresses: []*string{
-				aws.String(e.ToEmail),
+				aws.String(e.To()),
 			},
 		},
 		Message: &ses.Message{
@@ -69,7 +69,7 @@ func (ss *SES) Send(e Email) error {
 				Data:    aws.String(e.Subject),
 			},
 		},
-		Source: aws.String(e.FromEmail),
+		Source: aws.String(e.From()),
 		// Uncomment to use a configuration set
 		//ConfigurationSetName: aws.String(ConfigurationSet),
 	}

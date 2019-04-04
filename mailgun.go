@@ -33,18 +33,8 @@ func NewMailgun(cfg MailgunCfg) *Mailgun {
 func (mg *Mailgun) Send(e Email) error {
 	fmt.Println("Send email via mailgun...")
 
-	to := e.ToEmail
-	if e.ToName != "" {
-		to = fmt.Sprintf("%s <%s>", e.ToName, e.ToEmail)
-	}
-
-	from := e.FromEmail
-	if e.FromName != "" {
-		from = fmt.Sprintf("%s <%s>", e.FromName, e.FromEmail)
-	}
-
 	// The message object allows you to add attachments and Bcc recipients
-	message := mg.sender.NewMessage(from, e.Subject, e.PlainContent, to)
+	message := mg.sender.NewMessage(e.From(), e.Subject, e.PlainContent, e.To())
 	message.SetHtml(e.HTMLContent)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)

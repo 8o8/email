@@ -29,7 +29,7 @@ func TestAll(t *testing.T) {
 
 	t.Run("email", func(t *testing.T) {
 		t.Run("testSES", testSES)
-		//t.Run("testMailgun", testMailgun)
+		t.Run("testMailgun", testMailgun)
 		//t.Run("testSendgrid", testSendgrid)
 	})
 
