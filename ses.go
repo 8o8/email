@@ -5,6 +5,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ses"
 )
@@ -17,17 +18,25 @@ type SES struct {
 
 // SESCfg provides config info
 type SESCfg struct {
-	AWSRegion string
+	AWSRegion          string
+	AWSAccessKeyID     string
+	AWSSecretAccessKey string
 }
 
 // NewSES returns a pointer to an SES sender
-func NewSES(cfg SESCfg) *SES {
+func NewSES(cfg SESCfg) (*SES, error) {
 	sndr := &SES{
 		cfg: cfg,
 	}
-	sess := session.Must(session.NewSession())
-	sndr.sender = ses.New(sess, aws.NewConfig().WithRegion(cfg.AWSRegion))
-	return sndr
+	sess, err := session.NewSession(&aws.Config{
+		Region:      aws.String(cfg.AWSRegion),
+		Credentials: credentials.NewStaticCredentials(cfg.AWSAccessKeyID, cfg.AWSSecretAccessKey, ""),
+	})
+	if err != nil {
+		return sndr, err
+	}
+	sndr.sender = ses.New(sess)
+	return sndr, nil
 }
 
 // Send sends an email
@@ -80,7 +89,7 @@ func (ss *SES) Send(e Email) error {
 			default:
 				return fmt.Errorf("%s", aerr.Error())
 			}
-		} 
+		}
 		return err
 	}
 

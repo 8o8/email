@@ -64,29 +64,6 @@ func setup() {
 	}
 }
 
-func testSES(t *testing.T) {
-
-	cfg := email.SESCfg{
-		AWSRegion: AWS_REGION,
-	}
-	ses := email.NewSES(cfg)
-
-	email := email.Email{
-		FromName:     senderName,
-		FromEmail:    senderEmail,
-		ToName:       recipientName,
-		ToEmail:      recipientEmail,
-		Subject:      "AWS SES Test",
-		PlainContent: "This is the plain text",
-		HTMLContent:  "<h1>This is HTML</h1>",
-	}
-
-	err := ses.Send(email)
-	if err != nil {
-		t.Errorf("Send() err = %s", err)
-	}
-}
-
 func testMailgun(t *testing.T) {
 
 	cfg := email.MailgunCfg{
@@ -127,6 +104,34 @@ func testSendgrid(t *testing.T) {
 	}
 
 	err := sg.Send(email)
+	if err != nil {
+		t.Errorf("Send() err = %s", err)
+	}
+}
+
+func testSES(t *testing.T) {
+
+	cfg := email.SESCfg{
+		AWSRegion: AWS_REGION,
+		AWSAccessKeyID: AWS_ACCESS_KEY_ID,
+		AWSSecretAccessKey: AWS_SECRET_ACCESS_KEY,
+	}
+	ses, err := email.NewSES(cfg)
+	if err != nil {
+		t.Fatalf("email.NewSES() err = %s", err)
+	}
+
+	email := email.Email{
+		FromName:     senderName,
+		FromEmail:    senderEmail,
+		ToName:       recipientName,
+		ToEmail:      recipientEmail,
+		Subject:      "AWS SES Test",
+		PlainContent: "This is the plain text",
+		HTMLContent:  "<h1>This is HTML</h1>",
+	}
+
+	err = ses.Send(email)
 	if err != nil {
 		t.Errorf("Send() err = %s", err)
 	}
