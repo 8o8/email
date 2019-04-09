@@ -1,9 +1,9 @@
-// Package email is a wrapper for third-party email services such as Sendgrid, Mailgun and Amazon SES
+// Package email is a wrapper for third-party email services - Sendgrid, Mailgun and Amazon SES
 package email
 
 import "fmt"
 
-// A sender can send an email
+// A sender can send email
 type sender interface {
 	Send(Email) error
 }

@@ -14,14 +14,18 @@ var AWS_SECRET_ACCESS_KEY = ""
 var MAILGUN_DOMAIN = ""
 var MAILGUN_API_KEY = ""
 var SENDGRID_API_KEY = ""
+var TEST_SENDER_NAME = ""
+var TEST_SENDER_EMAIL = ""
+var TEST_RECIPIENT_NAME = ""
+var TEST_RECIPIENT_EMAIL = ""
+var TEST_SUBJECT = ""
+var TEST_HTML_CONTENT = ""
+var TEST_PLAIN_CONTENT = ""
 
-// Note for Amazon SES: If account is sandbox, both from and to emails MUST be verified
-const (
-	senderName     = "8o8/email"
-	senderEmail    = "michael.donnici@csanz.edu.au"
-	recipientName  = "Mike Donnici"
-	recipientEmail = "michael.donnici@gmail.com"
-)
+// By default, no tests will run
+var TEST_MAILGUN = false
+var TEST_SENDGRID = false
+var TEST_SES = false
 
 func TestAll(t *testing.T) {
 
@@ -30,41 +34,62 @@ func TestAll(t *testing.T) {
 	t.Run("email", func(t *testing.T) {
 		t.Run("testSES", testSES)
 		t.Run("testMailgun", testMailgun)
-		//t.Run("testSendgrid", testSendgrid)
+		t.Run("testSendgrid", testSendgrid)
 	})
-
 }
 
 func setup() {
+
 	envy.Load()
+
+	// Optional, but one should probably be configured for anything to happen!
+	AWS_REGION = envy.Get("AWS_REGION", "")
+	AWS_ACCESS_KEY_ID = envy.Get("AWS_ACCESS_KEY_ID", "")
+	AWS_SECRET_ACCESS_KEY = envy.Get("AWS_SECRET_ACCESS_KEY", "")
+	MAILGUN_DOMAIN = envy.Get("MAILGUN_DOMAIN", "")
+	MAILGUN_API_KEY = envy.Get("MAILGUN_API_KEY", "")
+	SENDGRID_API_KEY = envy.Get("SENDGRID_API_KEY", "")
+
+	// Required
 	var err error
-	AWS_REGION, err = envy.MustGet("AWS_REGION")
+	TEST_SENDER_NAME, err = envy.MustGet("TEST_SENDER_NAME")
 	if err != nil {
-		log.Fatalln("could not get env var AWS_REGION")
+		log.Fatalf("setup() could not get env var TEST_SENDER_NAME")
 	}
-	AWS_ACCESS_KEY_ID, err = envy.MustGet("AWS_ACCESS_KEY_ID")
+	TEST_SENDER_EMAIL, err = envy.MustGet("TEST_SENDER_EMAIL")
 	if err != nil {
-		log.Fatalln("could not get env var AWS_ACCESS_KEY_ID")
+		log.Fatalf("setup() could not get env var TEST_SENDER_EMAIL")
 	}
-	AWS_SECRET_ACCESS_KEY, err = envy.MustGet("AWS_SECRET_ACCESS_KEY")
+	TEST_RECIPIENT_NAME, err = envy.MustGet("TEST_RECIPIENT_NAME")
 	if err != nil {
-		log.Fatalln("could not get env var AWS_SECRET_ACCESS_KEY")
+		log.Fatalf("setup() could not get env var TEST_RECIPIENT_NAME")
 	}
-	MAILGUN_DOMAIN, err = envy.MustGet("MAILGUN_DOMAIN")
+	TEST_RECIPIENT_EMAIL, err = envy.MustGet("TEST_RECIPIENT_EMAIL")
 	if err != nil {
-		log.Fatalln("could not get env var MAILGUN_DOMAIN")
+		log.Fatalf("setup() could not get env var TEST_RECIPIENT_EMAIL")
 	}
-	MAILGUN_API_KEY, err = envy.MustGet("MAILGUN_API_KEY")
-	if err != nil {
-		log.Fatalln("could not get env var MAILGUN_API_KEY")
+
+	// test flags
+	test_mailgun := envy.Get("TEST_MAILGUN", "false")
+	if test_mailgun == "true" {
+		TEST_MAILGUN = true
 	}
-	SENDGRID_API_KEY, err = envy.MustGet("SENDGRID_API_KEY")
-	if err != nil {
-		log.Fatalln("could not get env var SENDGRID_API_KEY")
+	test_sendgrid := envy.Get("TEST_SENDGRID", "false")
+	if test_sendgrid == "true" {
+		TEST_SENDGRID = true
+	}
+	test_ses := envy.Get("TEST_SES", "false")
+	if test_ses == "true" {
+		TEST_SES = true
 	}
 }
 
 func testMailgun(t *testing.T) {
+
+	if !TEST_MAILGUN {
+		t.Log("TEST_MAILGUN = false")
+		return
+	}
 
 	cfg := email.MailgunCfg{
 		Domain: MAILGUN_DOMAIN,
@@ -73,10 +98,10 @@ func testMailgun(t *testing.T) {
 	mg := email.NewMailgun(cfg)
 
 	email := email.Email{
-		FromName:     senderName,
-		FromEmail:    senderEmail,
-		ToName:       recipientName,
-		ToEmail:      recipientEmail,
+		FromName:     TEST_SENDER_NAME,
+		FromEmail:    TEST_SENDER_EMAIL,
+		ToName:       TEST_RECIPIENT_NAME,
+		ToEmail:      TEST_RECIPIENT_EMAIL,
 		Subject:      "Mailgun Test",
 		PlainContent: "This is the plain text",
 		HTMLContent:  "<h1>This is HTML</h1>",
@@ -90,14 +115,19 @@ func testMailgun(t *testing.T) {
 
 func testSendgrid(t *testing.T) {
 
+	if !TEST_SENDGRID {
+		t.Log("TEST_SENDGRID = false")
+		return
+	}
+
 	cfg := email.SendgridCfg{APIKey: SENDGRID_API_KEY}
 	sg := email.NewSendgrid(cfg)
 
 	email := email.Email{
-		FromName:     senderName,
-		FromEmail:    senderEmail,
-		ToName:       recipientName,
-		ToEmail:      recipientEmail,
+		FromName:     TEST_SENDER_NAME,
+		FromEmail:    TEST_SENDER_EMAIL,
+		ToName:       TEST_RECIPIENT_NAME,
+		ToEmail:      TEST_RECIPIENT_EMAIL,
 		Subject:      "Sendgrid Test",
 		PlainContent: "This is the plain text",
 		HTMLContent:  "<h1>This is HTML</h1>",
@@ -111,9 +141,14 @@ func testSendgrid(t *testing.T) {
 
 func testSES(t *testing.T) {
 
+	if !TEST_SES {
+		t.Log("TEST_SES = false")
+		return
+	}
+
 	cfg := email.SESCfg{
-		AWSRegion: AWS_REGION,
-		AWSAccessKeyID: AWS_ACCESS_KEY_ID,
+		AWSRegion:          AWS_REGION,
+		AWSAccessKeyID:     AWS_ACCESS_KEY_ID,
 		AWSSecretAccessKey: AWS_SECRET_ACCESS_KEY,
 	}
 	ses, err := email.NewSES(cfg)
@@ -122,10 +157,10 @@ func testSES(t *testing.T) {
 	}
 
 	email := email.Email{
-		FromName:     senderName,
-		FromEmail:    senderEmail,
-		ToName:       recipientName,
-		ToEmail:      recipientEmail,
+		FromName:     TEST_SENDER_NAME,
+		FromEmail:    TEST_SENDER_EMAIL,
+		ToName:       TEST_RECIPIENT_NAME,
+		ToEmail:      TEST_RECIPIENT_EMAIL,
 		Subject:      "AWS SES Test",
 		PlainContent: "This is the plain text",
 		HTMLContent:  "<h1>This is HTML</h1>",
