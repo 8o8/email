@@ -1,6 +1,6 @@
 # email for Go
 
-A basic wrapper for Amazon SES, Mailgun and Sendgrid APIs,
+A basic wrapper for Amazon SES, Mailgun and Sendgrid APIs
 
 ## Installation
 
@@ -12,9 +12,7 @@ go get -u github.com/8o8/email
 
 To run the tests set up a `.env` file with the following values:
 
-**BE SURE TO ADD `.env` TO `.gitignore` - DO IT NOW!**
-
-If you push the `.env` file to a public repo, the keys will be detected, alarms will ring and Mailgun/Sendgrid will suspend your account immediately.
+> **Don't forget to add `.env` to `.gitignore`**. If you accidentally push the `.env` file to a public repo, the keys will be detected, alarms will ring and Mailgun/Sendgrid will immediately suspend your account.
 
 ```env
 # For Amazon SES - also need IAM, Policy and all that guff
