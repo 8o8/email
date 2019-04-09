@@ -73,4 +73,12 @@ func main() {
 }
 ```
 
-That's it, for now.
+## Version
+
+Current: v0.1.0
+
+As stated in item 4 of the [SemVer specification](<https://semver.org/>):
+
+>Major version zero (0.y.z) is for initial development. Anything may change at
+any time. The public API should not be considered stable.
+
