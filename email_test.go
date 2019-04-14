@@ -1,6 +1,8 @@
 package email_test
 
 import (
+	"encoding/base64"
+	"io/ioutil"
 	"log"
 	"testing"
 
@@ -23,18 +25,29 @@ var TEST_HTML_CONTENT = ""
 var TEST_PLAIN_CONTENT = ""
 
 // By default, no tests will run
-var TEST_MAILGUN = false
-var TEST_SENDGRID = false
-var TEST_SES = false
+var TEST_MAILGUN bool
+var TEST_SENDGRID bool
+var TEST_SES bool
+
+// Attachment test files
+var testAttachments = []email.Attachment{}
+var test1FilePath = "testdata/yeats.pdf"
+var test1FileName = "yeats.pdf"
+var test1FileMimeType = "application/pdf"
+var test1FileBase64 string
+var test2FilePath = "testdata/dog.jpg"
+var test2FileName = "dog.jpg"
+var test2FileMimeType = "image/jpg"
+var test2FileBase64 string
 
 func TestAll(t *testing.T) {
 
 	setup()
 
 	t.Run("email", func(t *testing.T) {
-		t.Run("testSES", testSES)
 		t.Run("testMailgun", testMailgun)
-		t.Run("testSendgrid", testSendgrid)
+		//t.Run("testSendgrid", testSendgrid)
+		//t.Run("testSES", testSES)
 	})
 }
 
@@ -82,6 +95,32 @@ func setup() {
 	if test_ses == "true" {
 		TEST_SES = true
 	}
+
+	// test attachments
+	xb, err := ioutil.ReadFile(test1FilePath)
+	if err != nil {
+		log.Fatalf("setup() ioutil.Readfile() err = %s", err)
+	}
+	test1FileBase64 = base64.StdEncoding.EncodeToString(xb)
+	xb, err = ioutil.ReadFile(test2FilePath)
+	if err != nil {
+		log.Fatalf("setup() ioutil.Readfile() err = %s", err)
+	}
+	test2FileBase64 = base64.StdEncoding.EncodeToString(xb)
+
+	testAttachments = []email.Attachment{
+		email.Attachment{
+			FileName:      test1FileName,
+			MIMEType:      test1FileMimeType,
+			Base64Content: test1FileBase64,
+		},
+		email.Attachment{
+			FileName:      test2FileName,
+			MIMEType:      test2FileMimeType,
+			Base64Content: test2FileBase64,
+		},
+	}
+
 }
 
 func testMailgun(t *testing.T) {
@@ -105,6 +144,7 @@ func testMailgun(t *testing.T) {
 		Subject:      "Mailgun Test",
 		PlainContent: "This is the plain text",
 		HTMLContent:  "<h1>This is HTML</h1>",
+		Attachments:  testAttachments,
 	}
 
 	err := mg.Send(email)
