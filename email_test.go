@@ -45,9 +45,9 @@ func TestAll(t *testing.T) {
 	setup()
 
 	t.Run("email", func(t *testing.T) {
-		t.Run("testMailgun", testMailgun)
+		//t.Run("testMailgun", testMailgun)
 		//t.Run("testSendgrid", testSendgrid)
-		//t.Run("testSES", testSES)
+		t.Run("testSES", testSES)
 	})
 }
 
@@ -171,6 +171,7 @@ func testSendgrid(t *testing.T) {
 		Subject:      "Sendgrid Test",
 		PlainContent: "This is the plain text",
 		HTMLContent:  "<h1>This is HTML</h1>",
+		Attachments:  testAttachments,
 	}
 
 	err := sg.Send(email)
