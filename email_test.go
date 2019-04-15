@@ -45,8 +45,8 @@ func TestAll(t *testing.T) {
 	setup()
 
 	t.Run("email", func(t *testing.T) {
-		//t.Run("testMailgun", testMailgun)
-		//t.Run("testSendgrid", testSendgrid)
+		t.Run("testMailgun", testMailgun)
+		t.Run("testSendgrid", testSendgrid)
 		t.Run("testSES", testSES)
 	})
 }
@@ -197,7 +197,7 @@ func testSES(t *testing.T) {
 		t.Fatalf("email.NewSES() err = %s", err)
 	}
 
-	email := email.Email{
+	eml := email.Email{
 		FromName:     TEST_SENDER_NAME,
 		FromEmail:    TEST_SENDER_EMAIL,
 		ToName:       TEST_RECIPIENT_NAME,
@@ -205,9 +205,10 @@ func testSES(t *testing.T) {
 		Subject:      "AWS SES Test",
 		PlainContent: "This is the plain text",
 		HTMLContent:  "<h1>This is HTML</h1>",
+		Attachments:  testAttachments,
 	}
 
-	err = ses.Send(email)
+	err = ses.Send(eml)
 	if err != nil {
 		t.Errorf("Send() err = %s", err)
 	}
