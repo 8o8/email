@@ -73,9 +73,7 @@ func main() {
 }
 ```
 
-## Version
-
-Current: v0.1.0
+## Versioning
 
 As stated in item 4 of the [SemVer specification](<https://semver.org/>):
 
