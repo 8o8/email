@@ -46,35 +46,37 @@ func (ss *SES) Send(e Email) error {
 	const charset = "UTF-8"
 
 	// Assemble the email.
-	input := &ses.SendEmailInput{
-		Destination: &ses.Destination{
-			CcAddresses: []*string{},
-			ToAddresses: []*string{
-				aws.String(e.To()),
-			},
-		},
-		Message: &ses.Message{
-			Body: &ses.Body{
-				Html: &ses.Content{
-					Charset: aws.String(charset),
-					Data:    aws.String(e.HTMLContent),
-				},
-				Text: &ses.Content{
-					Charset: aws.String(charset),
-					Data:    aws.String(e.PlainContent),
-				},
-			},
-			Subject: &ses.Content{
-				Charset: aws.String(charset),
-				Data:    aws.String(e.Subject),
-			},
-		},
-		Source: aws.String(e.From()),
-		// Uncomment to use a configuration set
-		//ConfigurationSetName: aws.String(ConfigurationSet),
-	}
+	// input := &ses.SendEmailInput{
+	// 	Destination: &ses.Destination{
+	// 		CcAddresses: []*string{},
+	// 		ToAddresses: []*string{
+	// 			aws.String(e.To()),
+	// 		},
+	// 	},
+	// 	Message: &ses.Message{
+	// 		Body: &ses.Body{
+	// 			Html: &ses.Content{
+	// 				Charset: aws.String(charset),
+	// 				Data:    aws.String(e.HTMLContent),
+	// 			},
+	// 			Text: &ses.Content{
+	// 				Charset: aws.String(charset),
+	// 				Data:    aws.String(e.PlainContent),
+	// 			},
+	// 		},
+	// 		Subject: &ses.Content{
+	// 			Charset: aws.String(charset),
+	// 			Data:    aws.String(e.Subject),
+	// 		},
+	// 	},
+	// 	Source: aws.String(e.From()),
+	// 	// Uncomment to use a configuration set
+	// 	//ConfigurationSetName: aws.String(ConfigurationSet),
+	// }
 
-	_, err := ss.sender.SendEmail(input)
+	//_, err := ss.sender.SendEmail(input)
+
+	err := ss.sendRaw(e)
 
 	// Display error messages if they occur.
 	if err != nil {
@@ -93,5 +95,44 @@ func (ss *SES) Send(e Email) error {
 		return err
 	}
 
+	return nil
+}
+
+// sendRaw sends a raw (RFC 5322) email - required for attachments via SES
+// ref: https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-raw.html
+func (ss *SES) sendRaw(e Email) error {
+
+	source := aws.String(e.FromEmail)
+	destinations := []*string{aws.String(e.ToEmail)}
+	message := ses.RawMessage{Data: []byte(e.Raw())}
+	input := &ses.SendRawEmailInput{
+		Source: source,
+		Destinations: destinations,
+		RawMessage: &message,
+	}
+
+	_, err := ss.sender.SendRawEmail(input)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeMessageRejected:
+				fmt.Println(ses.ErrCodeMessageRejected, aerr.Error())
+			case ses.ErrCodeMailFromDomainNotVerifiedException:
+				fmt.Println(ses.ErrCodeMailFromDomainNotVerifiedException, aerr.Error())
+			case ses.ErrCodeConfigurationSetDoesNotExistException:
+				fmt.Println(ses.ErrCodeConfigurationSetDoesNotExistException, aerr.Error())
+			case ses.ErrCodeConfigurationSetSendingPausedException:
+				fmt.Println(ses.ErrCodeConfigurationSetSendingPausedException, aerr.Error())
+			case ses.ErrCodeAccountSendingPausedException:
+				fmt.Println(ses.ErrCodeAccountSendingPausedException, aerr.Error())
+			default:
+				fmt.Println(aerr.Error())
+			}
+		} else {
+			// Print the error, cast err to awserr.Error to get the Code and
+			// Message from an error.
+			fmt.Println(err.Error())
+		}
+	}
 	return nil
 }

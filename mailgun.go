@@ -2,6 +2,7 @@ package email
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -36,6 +37,16 @@ func (mg *Mailgun) Send(e Email) error {
 	// The message object allows you to add attachments and Bcc recipients
 	message := mg.sender.NewMessage(e.From(), e.Subject, e.PlainContent, e.To())
 	message.SetHtml(e.HTMLContent)
+
+	// Attachments are sent as Base64 encoded string. For mailgun need to decode
+	// the attachment and pass in []byte to AddBufferAttachment()
+	for _, a := range e.Attachments {
+		xb, err := base64.StdEncoding.DecodeString(a.Base64Content)
+		if err != nil {
+			return err
+		}
+		message.AddBufferAttachment(a.FileName, xb)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
