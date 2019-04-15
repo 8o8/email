@@ -63,7 +63,7 @@ func (e Email) Raw() string {
 	msg.AddAlternative("text/html", e.HTMLContent)
 
 	for i := 0; i < len(e.Attachments); i++ {
-		
+
 		xb, err := base64.StdEncoding.DecodeString(e.Attachments[i].Base64Content)
 		if err != nil {
 			log.Println(err)

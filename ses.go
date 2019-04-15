@@ -106,9 +106,9 @@ func (ss *SES) sendRaw(e Email) error {
 	destinations := []*string{aws.String(e.ToEmail)}
 	message := ses.RawMessage{Data: []byte(e.Raw())}
 	input := &ses.SendRawEmailInput{
-		Source: source,
+		Source:       source,
 		Destinations: destinations,
-		RawMessage: &message,
+		RawMessage:   &message,
 	}
 
 	_, err := ss.sender.SendRawEmail(input)
