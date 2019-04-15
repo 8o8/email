@@ -46,8 +46,11 @@ func TestAll(t *testing.T) {
 
 	t.Run("email", func(t *testing.T) {
 		t.Run("testMailgun", testMailgun)
+		t.Run("testMailgunAttachments", testMailgunAttachments)
 		t.Run("testSendgrid", testSendgrid)
+		t.Run("testSendgridAttachments", testSendgridAttachments)
 		t.Run("testSES", testSES)
+		t.Run("testSESAttachments", testSESAttachments)
 	})
 }
 
@@ -144,6 +147,35 @@ func testMailgun(t *testing.T) {
 		Subject:      "Mailgun Test",
 		PlainContent: "This is the plain text",
 		HTMLContent:  "<h1>This is HTML</h1>",
+	}
+
+	err := mg.Send(email)
+	if err != nil {
+		t.Errorf("Send() err = %s", err)
+	}
+}
+
+func testMailgunAttachments(t *testing.T) {
+
+	if !TEST_MAILGUN {
+		t.Log("TEST_MAILGUN = false")
+		return
+	}
+
+	cfg := email.MailgunCfg{
+		Domain: MAILGUN_DOMAIN,
+		APIKey: MAILGUN_API_KEY,
+	}
+	mg := email.NewMailgun(cfg)
+
+	email := email.Email{
+		FromName:     TEST_SENDER_NAME,
+		FromEmail:    TEST_SENDER_EMAIL,
+		ToName:       TEST_RECIPIENT_NAME,
+		ToEmail:      TEST_RECIPIENT_EMAIL,
+		Subject:      "Mailgun Test with attachments",
+		PlainContent: "This is the plain text with attachments",
+		HTMLContent:  "<h1>This is HTML with attachments</h1>",
 		Attachments:  testAttachments,
 	}
 
@@ -171,6 +203,32 @@ func testSendgrid(t *testing.T) {
 		Subject:      "Sendgrid Test",
 		PlainContent: "This is the plain text",
 		HTMLContent:  "<h1>This is HTML</h1>",
+	}
+
+	err := sg.Send(email)
+	if err != nil {
+		t.Errorf("Send() err = %s", err)
+	}
+}
+
+func testSendgridAttachments(t *testing.T) {
+
+	if !TEST_SENDGRID {
+		t.Log("TEST_SENDGRID = false")
+		return
+	}
+
+	cfg := email.SendgridCfg{APIKey: SENDGRID_API_KEY}
+	sg := email.NewSendgrid(cfg)
+
+	email := email.Email{
+		FromName:     TEST_SENDER_NAME,
+		FromEmail:    TEST_SENDER_EMAIL,
+		ToName:       TEST_RECIPIENT_NAME,
+		ToEmail:      TEST_RECIPIENT_EMAIL,
+		Subject:      "Sendgrid Test with attachments",
+		PlainContent: "This is the plain text with attachments",
+		HTMLContent:  "<h1>This is HTML with attachments</h1>",
 		Attachments:  testAttachments,
 	}
 
@@ -205,6 +263,39 @@ func testSES(t *testing.T) {
 		Subject:      "AWS SES Test",
 		PlainContent: "This is the plain text",
 		HTMLContent:  "<h1>This is HTML</h1>",
+	}
+
+	err = ses.Send(eml)
+	if err != nil {
+		t.Errorf("Send() err = %s", err)
+	}
+}
+
+func testSESAttachments(t *testing.T) {
+
+	if !TEST_SES {
+		t.Log("TEST_SES = false")
+		return
+	}
+
+	cfg := email.SESCfg{
+		AWSRegion:          AWS_REGION,
+		AWSAccessKeyID:     AWS_ACCESS_KEY_ID,
+		AWSSecretAccessKey: AWS_SECRET_ACCESS_KEY,
+	}
+	ses, err := email.NewSES(cfg)
+	if err != nil {
+		t.Fatalf("email.NewSES() err = %s", err)
+	}
+
+	eml := email.Email{
+		FromName:     TEST_SENDER_NAME,
+		FromEmail:    TEST_SENDER_EMAIL,
+		ToName:       TEST_RECIPIENT_NAME,
+		ToEmail:      TEST_RECIPIENT_EMAIL,
+		Subject:      "AWS SES Test with attachments",
+		PlainContent: "This is the plain text with attachments",
+		HTMLContent:  "<h1>This is HTML with attachments</h1>",
 		Attachments:  testAttachments,
 	}
 

@@ -3,7 +3,7 @@ package email
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/mailgun/mailgun-go/v3"
@@ -32,7 +32,8 @@ func NewMailgun(cfg MailgunCfg) *Mailgun {
 
 // Send sends an email
 func (mg *Mailgun) Send(e Email) error {
-	fmt.Println("Send email via mailgun...")
+
+	log.Printf("Send email to %s via mailgun", e.ToEmail)
 
 	// The message object allows you to add attachments and Bcc recipients
 	message := mg.sender.NewMessage(e.From(), e.Subject, e.PlainContent, e.To())
@@ -56,12 +57,7 @@ func (mg *Mailgun) Send(e Email) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("ID: %s Resp: %s\n", id, resp)
-
-	// error if non-200 response code
-	// if response.StatusCode < 200 || response.StatusCode > 299 {
-	// 	return fmt.Errorf("sendgrid.Client.Send() response (%d) - %s", response.StatusCode, http.StatusText(response.StatusCode))
-	// }
+	log.Printf("ID: %s Resp: %s", id, resp)
 
 	return nil
 }

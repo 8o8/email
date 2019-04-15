@@ -2,6 +2,7 @@ package email
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -41,44 +42,42 @@ func NewSES(cfg SESCfg) (*SES, error) {
 
 // Send sends an email
 func (ss *SES) Send(e Email) error {
-	fmt.Println("Send email via SES...")
 
+	// If there are attachments use sendRaw().
+	if len(e.Attachments) > 0 {
+		log.Printf("Send RAW email to %s via SES", e.ToEmail)
+		return ss.sendRaw(e)
+	}
+
+	log.Printf("Send email to %s via SES", e.ToEmail)
 	const charset = "UTF-8"
+	input := &ses.SendEmailInput{
+		Destination: &ses.Destination{
+			CcAddresses: []*string{},
+			ToAddresses: []*string{
+				aws.String(e.To()),
+			},
+		},
+		Message: &ses.Message{
+			Body: &ses.Body{
+				Html: &ses.Content{
+					Charset: aws.String(charset),
+					Data:    aws.String(e.HTMLContent),
+				},
+				Text: &ses.Content{
+					Charset: aws.String(charset),
+					Data:    aws.String(e.PlainContent),
+				},
+			},
+			Subject: &ses.Content{
+				Charset: aws.String(charset),
+				Data:    aws.String(e.Subject),
+			},
+		},
+		Source: aws.String(e.From()),
+	}
 
-	// Assemble the email.
-	// input := &ses.SendEmailInput{
-	// 	Destination: &ses.Destination{
-	// 		CcAddresses: []*string{},
-	// 		ToAddresses: []*string{
-	// 			aws.String(e.To()),
-	// 		},
-	// 	},
-	// 	Message: &ses.Message{
-	// 		Body: &ses.Body{
-	// 			Html: &ses.Content{
-	// 				Charset: aws.String(charset),
-	// 				Data:    aws.String(e.HTMLContent),
-	// 			},
-	// 			Text: &ses.Content{
-	// 				Charset: aws.String(charset),
-	// 				Data:    aws.String(e.PlainContent),
-	// 			},
-	// 		},
-	// 		Subject: &ses.Content{
-	// 			Charset: aws.String(charset),
-	// 			Data:    aws.String(e.Subject),
-	// 		},
-	// 	},
-	// 	Source: aws.String(e.From()),
-	// 	// Uncomment to use a configuration set
-	// 	//ConfigurationSetName: aws.String(ConfigurationSet),
-	// }
-
-	//_, err := ss.sender.SendEmail(input)
-
-	err := ss.sendRaw(e)
-
-	// Display error messages if they occur.
+	_, err := ss.sender.SendEmail(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
@@ -116,23 +115,21 @@ func (ss *SES) sendRaw(e Email) error {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case ses.ErrCodeMessageRejected:
-				fmt.Println(ses.ErrCodeMessageRejected, aerr.Error())
+				return fmt.Errorf("%s - %s", ses.ErrCodeMessageRejected, aerr.Error())
 			case ses.ErrCodeMailFromDomainNotVerifiedException:
-				fmt.Println(ses.ErrCodeMailFromDomainNotVerifiedException, aerr.Error())
+				return fmt.Errorf("%s - %s", ses.ErrCodeMailFromDomainNotVerifiedException, aerr.Error())
 			case ses.ErrCodeConfigurationSetDoesNotExistException:
-				fmt.Println(ses.ErrCodeConfigurationSetDoesNotExistException, aerr.Error())
+				return fmt.Errorf("%s - %s", ses.ErrCodeConfigurationSetDoesNotExistException, aerr.Error())
 			case ses.ErrCodeConfigurationSetSendingPausedException:
-				fmt.Println(ses.ErrCodeConfigurationSetSendingPausedException, aerr.Error())
+				return fmt.Errorf("%s - %s", ses.ErrCodeConfigurationSetSendingPausedException, aerr.Error())
 			case ses.ErrCodeAccountSendingPausedException:
-				fmt.Println(ses.ErrCodeAccountSendingPausedException, aerr.Error())
+				return fmt.Errorf("%s - %s", ses.ErrCodeAccountSendingPausedException, aerr.Error())
 			default:
-				fmt.Println(aerr.Error())
+				return fmt.Errorf("%s", aerr.Error())
 			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			fmt.Println(err.Error())
 		}
+		return err
 	}
+
 	return nil
 }
