@@ -3,7 +3,6 @@ package email
 import (
 	"context"
 	"encoding/base64"
-	"log"
 	"time"
 
 	"github.com/mailgun/mailgun-go/v3"
@@ -33,8 +32,6 @@ func NewMailgun(cfg MailgunCfg) *Mailgun {
 // Send sends an email
 func (mg *Mailgun) Send(e Email) error {
 
-	log.Printf("Send email to %s via mailgun", e.ToEmail)
-
 	// The message object allows you to add attachments and Bcc recipients
 	message := mg.sender.NewMessage(e.From(), e.Subject, e.PlainContent, e.To())
 	message.SetHtml(e.HTMLContent)
@@ -53,11 +50,10 @@ func (mg *Mailgun) Send(e Email) error {
 	defer cancel()
 
 	// Send the message	with a 10 second timeout
-	resp, id, err := mg.sender.Send(ctx, message)
+	_, _, err := mg.sender.Send(ctx, message)
 	if err != nil {
 		return err
 	}
-	log.Printf("ID: %s Resp: %s", id, resp)
 
 	return nil
 }

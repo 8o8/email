@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"log"
 
 	//"github.com/aws/aws-sdk-go/service/ses"
 	gomail "gopkg.in/gomail.v2"
@@ -53,7 +52,7 @@ func (e Email) From() string {
 
 // Raw converts the Email value to a raw message string in line with RFC 5322
 // This is required for sending emails with attachments via Amazon SES.
-func (e Email) Raw() string {
+func (e Email) Raw() (string, error) {
 
 	msg := gomail.NewMessage()
 	msg.SetHeader("From", fmt.Sprintf("%s <%s>", e.FromName, e.FromEmail))
@@ -66,7 +65,7 @@ func (e Email) Raw() string {
 
 		xb, err := base64.StdEncoding.DecodeString(e.Attachments[i].Base64Content)
 		if err != nil {
-			log.Println(err)
+			return "", fmt.Errorf("DecodeString() err = %s", err)
 		}
 		msg.Attach(e.Attachments[i].FileName, gomail.SetCopyFunc(func(w io.Writer) error {
 			_, err := w.Write(xb)
@@ -77,7 +76,7 @@ func (e Email) Raw() string {
 	var emailRaw bytes.Buffer
 	msg.WriteTo(&emailRaw)
 
-	return string(emailRaw.Bytes())
+	return string(emailRaw.Bytes()), nil
 }
 
 // nameEmail returns a string in the format: 'Name <name@somewhere.com>' if name

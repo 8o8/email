@@ -2,7 +2,6 @@ package email
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	sendgrid "github.com/sendgrid/sendgrid-go"
@@ -32,10 +31,7 @@ func NewSendgrid(cfg SendgridCfg) *Sendgrid {
 // Send sends an email
 func (sg *Sendgrid) Send(e Email) error {
 
-	log.Printf("Send email to %s via sendgrid", e.ToEmail)
-
 	message := prepare(e)
-
 	for _, a := range e.Attachments {
 		attach(a, message)
 	}

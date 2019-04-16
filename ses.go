@@ -2,7 +2,6 @@ package email
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -45,11 +44,9 @@ func (ss *SES) Send(e Email) error {
 
 	// If there are attachments use sendRaw().
 	if len(e.Attachments) > 0 {
-		log.Printf("Send RAW email to %s via SES", e.ToEmail)
 		return ss.sendRaw(e)
 	}
 
-	log.Printf("Send email to %s via SES", e.ToEmail)
 	const charset = "UTF-8"
 	input := &ses.SendEmailInput{
 		Destination: &ses.Destination{
@@ -101,16 +98,21 @@ func (ss *SES) Send(e Email) error {
 // ref: https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-raw.html
 func (ss *SES) sendRaw(e Email) error {
 
+	rawEmail, err := e.Raw()
+	if err != nil {
+		return fmt.Errorf("Raw() err = %s", err)
+	}
+
 	source := aws.String(e.FromEmail)
 	destinations := []*string{aws.String(e.ToEmail)}
-	message := ses.RawMessage{Data: []byte(e.Raw())}
+	message := ses.RawMessage{Data: []byte(rawEmail)}
 	input := &ses.SendRawEmailInput{
 		Source:       source,
 		Destinations: destinations,
 		RawMessage:   &message,
 	}
 
-	_, err := ss.sender.SendRawEmail(input)
+	_, err = ss.sender.SendRawEmail(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
